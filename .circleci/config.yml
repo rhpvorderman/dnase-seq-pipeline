@@ -24,12 +24,13 @@ make_tag: &make_tag
   command: |
     echo "export TAG=quay.io/encode-dcc/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_BRANCH}_${CIRCLE_WORKFLOW_ID}" > ${BASH_ENV}
 
-install_git_lfs: &install_git_lfs
+setup_git_lfs: &setup_git_lfs
   name: install git-lfs for large files
   command: |
     curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
     sudo apt-get install git-lfs
     git lfs install
+    git lfs pull
 
 install_jq: &install_jq
   name: install jq for json processing
@@ -40,6 +41,12 @@ install_samtools: &install_samtools
   name: install samtools for bam comparison
   command: |
     sudo apt-get install samtools -y
+
+run_dups_task: &run_dups_task
+  name: run dups task with cromwell/wdl
+  command: |
+    test/test.sh test/test_task/test_dups.wdl test/test_task/test_dups_input.json quay.io/encode-dcc/dnase-seq-pipeline:template docker
+
 
 install_singularity: &install_singularity
   name: install singularity
@@ -92,14 +99,13 @@ jobs:
       - checkout
       - run: *make_tag
       - run: *install_samtools
-      - run: *install_git_lfs
+      - run: *setup_git_lfs
       - run: *install_jq
+      - run: *run_dups_task
       - run:
+          name: compare dups step outputs
           command: |
-            pyenv global 3.5.2
-            git lfs pull
             source ${BASH_ENV}
-            test/test.sh test/test_task/test_dups.wdl test/test_task/test_dups_input.json quay.io/encode-dcc/dnase-seq-pipeline:template docker
             source test/test_helper.bash
             expected="test_data/dnase/alignment/expected/marked_bam"
             output=$(jq '.outputs."test_dups.dups.marked_bam"' test_dups_input.metadata.json)
