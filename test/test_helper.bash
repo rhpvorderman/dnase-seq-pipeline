@@ -1,17 +1,6 @@
 #!/bin/bash
 
-# Borrowed from Jemma Nelson
-
-function require_exe() {
-  exitstatus=0
-  for exe in "$@" ; do
-    if ! command -v "$exe" >/dev/null; then
-      exitstatus=1
-      echo "Could not find $exe, will not run tests" > /dev/stderr
-    fi
-  done
-  return $exitstatus
-}
+# Borrowed and modified from Jemma Nelson
 
 function cmp_text() {
   name=$1
@@ -40,13 +29,14 @@ function cmp_starch() {
 }
 
 function cmp_bam() {
-  name=$1
+  expected=$1
+  output=$2
   if ! command -v samtools ; then
-    echo "Cannot verify $name, samtools is not available"
-    return 0
+    echo "Cannot verify $expected, samtools is not available"
+    return 1
   fi
-  echo "Comparing $name..."
-  cmp <(samtools view "expected/$name") <(samtools view "output/$name") \
-    || (echo "$name does not match" ; false)
+  echo "Comparing $expected with $output"
+  cmp <(samtools view "$expected") <(samtools view "$output") \
+    || (echo "bams don't match" ; false)
 
 }

@@ -78,9 +78,13 @@ jobs:
             pyenv global 3.5.2
             git lfs pull
             apt-get install jq
+            apt-get install samtools -y
             source ${BASH_ENV}
             test/test.sh test/test_task/test_dups.wdl test/test_task/test_dups_input.json $TAG docker
-
+            source test/test_helper.sh
+            $expected = "test_data/dnase/alignment/expected/marked_bam"
+            $output = $(jq '.outputs."test_align.dups.marked_bam"' test_align_input.metadata.json)
+            cmp_bam $expected $output
 
 # Workflow
 workflows:
