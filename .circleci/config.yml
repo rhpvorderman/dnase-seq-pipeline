@@ -31,12 +31,12 @@ install_git_lfs: &install_git_lfs
     sudo apt-get install git-lfs
     git lfs install
 
-install_jq: &jq
+install_jq: &install_jq
   name: install jq for json processing
   command: |
     sudo apt-get install jq
 
-install_samtools: &samtools
+install_samtools: &install_samtools
   name: install samtools for bam comparison
   command: |
     sudo apt-get install samtools -y
