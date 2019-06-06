@@ -96,4 +96,4 @@ workflows:
             branches:
               ignore:
                 - PIP-371_markdown
-      - test_dups
+      - test_dups_docker
