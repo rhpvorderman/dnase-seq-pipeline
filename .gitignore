@@ -13,6 +13,7 @@ cromwell-executions/
 cromwell-workflow-logs/
 cromwell*.jar
 wdltool*.jar
+womtool*
 
 # Nextflow Files
 *.nf
