@@ -80,10 +80,10 @@ jobs:
             apt-get install jq
             apt-get install samtools -y
             source ${BASH_ENV}
-            test/test.sh test/test_task/test_dups.wdl test/test_task/test_dups_input.json $TAG docker
+            test/test.sh test/test_task/test_dups.wdl test/test_task/test_dups_input.json quay.io/encode-dcc/dnase-seq-pipeline:template docker
             source test/test_helper.sh
             $expected = "test_data/dnase/alignment/expected/marked_bam"
-            $output = $(jq '.outputs."test_align.dups.marked_bam"' test_align_input.metadata.json)
+            $output = $(jq '.outputs."test_dups.dups.marked_bam"' test_dups_input.metadata.json)
             cmp_bam $expected $output
 
 # Workflow
@@ -96,3 +96,4 @@ workflows:
             branches:
               ignore:
                 - PIP-371_markdown
+      - test_dups
