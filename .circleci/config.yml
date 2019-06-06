@@ -76,9 +76,10 @@ jobs:
       - run:
           command: |
             pyenv global 3.5.2
-            git lfs pull
+            apt-get install git-lfs
             apt-get install jq
             apt-get install samtools -y
+            git lfs pull
             source ${BASH_ENV}
             test/test.sh test/test_task/test_dups.wdl test/test_task/test_dups_input.json quay.io/encode-dcc/dnase-seq-pipeline:template docker
             source test/test_helper.sh
