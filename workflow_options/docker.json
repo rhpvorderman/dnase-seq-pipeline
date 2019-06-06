@@ -1,6 +1,6 @@
 {
     "default_runtime_attributes" : {
-    	"docker": "quay.io/encode-dcc/stampipes_single_docker:docker_with_footprints",
+    	"docker": "quay.io/encode-dcc/dnase-seq-pipeline:template",
         "cpu": "2",
         "memory": "7 GB"
     }

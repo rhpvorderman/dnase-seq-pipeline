@@ -1,13 +1,13 @@
 import "../../dnase.wdl" as dnase
 
-workflow test_align {
+workflow test_dups {
 	Array[File] fastqs
 	Boolean UMI
 	String? UMI_value
 	File adapters
 	File reference_index
 	File reference
-	Int read_length
+	File nuclear_chroms
 	Int split_fastq_chunksize
 	Int trim_to = 0
 	Int threads = 1
@@ -20,7 +20,7 @@ workflow test_align {
 		}
 	}
 
-	Array[Pair[File, File]] chunked_pairs = zip(dnase.split_fastq.splits[0], dnase.split_fastq.splits[1])
+	Array[Pair[File, File]] chunked_pairs = zip(split_fastq.splits[0], split_fastq.splits[1])
 
 	scatter (pair in chunked_pairs) {
 		call dnase.trim_adapters { input:
@@ -32,13 +32,13 @@ workflow test_align {
 
 		if (trim_to > 0) {
 			call dnase.trim_to_length { input:
-				read_one = dnase.trim_adapters.trimmed_fastqs[0],
-				read_two = dnase.trim_adapters.trimmed_fastqs[1],
+				read_one = trim_adapters.trimmed_fastqs[0],
+				read_two = trim_adapters.trimmed_fastqs[1],
 				trim_to = trim_to
 			}
 		}
 
-		Array[File] trimmed_fastqs = select_first([dnase.trim_to_length.trimmed_fastqs, dnase.trim_adapters.trimmed_fastqs])
+		Array[File] trimmed_fastqs = select_first([trim_to_length.trimmed_fastqs, trim_adapters.trimmed_fastqs])
 
 		if (UMI) {
 			call dnase.add_umi_info { input:
@@ -48,7 +48,7 @@ workflow test_align {
 			}
 		}
 
-		Array[File] fastqs_for_alignment = select_first([dnase.add_umi_info.with_umi, trimmed_fastqs])
+		Array[File] fastqs_for_alignment = select_first([add_umi_info.with_umi, trimmed_fastqs])
 
 		call dnase.align { input:
 			read_one = fastqs_for_alignment[0],
@@ -57,5 +57,29 @@ workflow test_align {
 			reference_index = reference_index,
 			threads = threads
 		}
+
+		call dnase.filter_bam { input:
+			unfiltered_bam = align.unfiltered_bam,
+			nuclear_chroms = nuclear_chroms
+		}
+
+		call dnase.sort_bam { input:
+			filtered_bam = filter_bam.filtered_bam,
+			threads = threads
+		}
+	}
+
+	call dnase.merge { input:
+		bams = sort_bam.sorted_bam
+	}
+
+	String dups_cmd = 	if UMI then 'UmiAwareMarkDuplicatesWithMateCigar' 
+							   else 'MarkDuplicatesWithMateCigar'
+	String dups_extra = if UMI then 'UMI_TAG_NAME=XD'
+					           else '' 
+	call dnase.dups { input:
+		merged_bam = merge.merged_bam,
+		cmd = dups_cmd,
+		extra = dups_extra
 	}
 }

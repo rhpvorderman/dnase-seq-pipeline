@@ -1,0 +1,16 @@
+{
+	"test_dups.fastqs":					["test_data/dnase/alignment/r1.fastq.gz",
+						  				 "test_data/dnase/alignment/r2.fastq.gz"],
+	"test_dups.adapters":				"test_data/dnase/alignment/adapters.txt",
+	"test_dups.reference_index":		"test_data/ref/chr22.fa.fai",
+	"test_dups.reference":				"test_data/ref/chr22.fa",
+	"test_dups.align.amb":				"test_data/ref/chr22.fa.amb",
+	"test_dups.align.ann":				"test_data/ref/chr22.fa.ann",
+	"test_dups.align.bwt":				"test_data/ref/chr22.fa.bwt",
+	"test_dups.align.pac":				"test_data/ref/chr22.fa.pac",
+	"test_dups.align.sa":				"test_data/ref/chr22.fa.sa",
+	"test_dups.nuclear_chroms":			"test_data/ref/chr22.fa.nuclear.txt",
+	"test_dups.UMI":	 				false,
+	"test_dups.trim_to":				0,
+	"test_dups.split_fastq_chunksize":	50000
+}

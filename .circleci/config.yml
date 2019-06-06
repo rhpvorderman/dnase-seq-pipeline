@@ -68,6 +68,19 @@ jobs:
             docker push quay.io/encode-dcc/dnase-seq-pipeline:template
             docker logout
           no_output_timeout: 30m
+  test_dups_docker:
+    <<: *machine_defaults
+    steps:
+      - checkout
+      - run: *make_tag
+      - run:
+          command: |
+            pyenv global 3.5.2
+            git lfs pull
+            apt-get install jq
+            source ${BASH_ENV}
+            test/test.sh test/test_task/test_dups.wdl test/test_task/test_dups_input.json $TAG docker
+
 
 # Workflow
 workflows:
