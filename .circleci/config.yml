@@ -76,9 +76,11 @@ jobs:
       - run:
           command: |
             pyenv global 3.5.2
+            curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
             sudo apt-get install git-lfs
             sudo apt-get install jq
             sudo apt-get install samtools -y
+            git lfs install
             git lfs pull
             source ${BASH_ENV}
             test/test.sh test/test_task/test_dups.wdl test/test_task/test_dups_input.json quay.io/encode-dcc/dnase-seq-pipeline:template docker
@@ -92,9 +94,4 @@ workflows:
   version: 2
   build_workflow:
     jobs:
-      - build:
-          filters:
-            branches:
-              ignore:
-                - PIP-371_markdown
       - test_dups_docker
