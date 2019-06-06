@@ -85,6 +85,7 @@ jobs:
             docker push quay.io/encode-dcc/dnase-seq-pipeline:template
             docker logout
           no_output_timeout: 30m
+  
   test_dups_docker:
     <<: *machine_defaults
     steps:
@@ -100,8 +101,8 @@ jobs:
             source ${BASH_ENV}
             test/test.sh test/test_task/test_dups.wdl test/test_task/test_dups_input.json quay.io/encode-dcc/dnase-seq-pipeline:template docker
             source test/test_helper.bash
-            expected = "test_data/dnase/alignment/expected/marked_bam"
-            output = $(jq '.outputs."test_dups.dups.marked_bam"' test_dups_input.metadata.json)
+            expected="test_data/dnase/alignment/expected/marked_bam"
+            output=$(jq '.outputs."test_dups.dups.marked_bam"' test_dups_input.metadata.json)
             cmp_bam $expected $output
 
 # Workflow
