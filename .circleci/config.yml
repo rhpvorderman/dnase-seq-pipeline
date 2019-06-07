@@ -112,7 +112,7 @@ jobs:
             output_marked_bam=$(jq -r '.outputs."test_dups.dups.marked_bam"' test_dups_input.metadata.json)
             output_duplicates_picard=$(jq -r '.outputs."test_dups.dups.marked_dup_picard"' test_dups_input.metadata.json)
             [ -f $expected_marked_bam ] || exit 1
-            [ -f $expected_duplicates_picard]
+            [ -f $expected_duplicates_picard ] || exit 1
             [ -f $output_marked_bam ] || exit 1
             [ -f $output_duplicates_picard ] || exit 1
             cmp_bam $expected_marked_bam $output_marked_bam
