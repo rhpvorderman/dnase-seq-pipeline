@@ -9,12 +9,11 @@ function cmp_text() {
 }
 
 function cmp_picard() {
-  name=$1
-  expected=$(grep -v '^#' "expected/$name")
-  actual=$(grep -v '^#' "output/$name")
+  expected=$(grep -v '^#' $1)
+  output=$(grep -v '^#' $2)
 
-  echo "Comparing $name..."
-  diff <(echo "$expected") <(echo "$actual")
+  echo "Comparing $expected and $output"
+  diff <(echo $expected) <(echo $output) || (echo "picard files don't match"; return 1)
 }
 
 function cmp_starch() {
