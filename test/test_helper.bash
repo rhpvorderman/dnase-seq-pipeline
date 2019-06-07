@@ -36,7 +36,7 @@ function cmp_bam() {
     return 1
   fi
   echo "Comparing $expected with $output"
-  cmp <(samtools view "$expected") <(samtools view "$output") \
+  cmp <(samtools view $expected) <(samtools view $output) \
     || (echo "bams don't match" ; false)
 
 }
