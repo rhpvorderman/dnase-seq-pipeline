@@ -107,7 +107,7 @@ jobs:
           command: |
             source ${BASH_ENV}
             source test/test_helper.bash
-            expected_marked_bam="test_data/dnase/alignment/expected/marked.bam"
+            expected_marked_bam="test_data/dnase/alignment/expected/_filtered.bam"
             output_marked_bam=$(jq -r '.outputs."test_dups.dups.marked_bam"' test_dups_input.metadata.json)
             [ -f $expected_marked_bam ] || exit 1
             [ -f $output_marked_bam ] || exit 1
