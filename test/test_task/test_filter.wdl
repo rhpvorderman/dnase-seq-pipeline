@@ -6,7 +6,7 @@ workflow test_filter {
 
 	Int flag = if UMI then 1536 else 512
 
-	call dnase.filter { input: 
+	call filter { input:
 		marked_bam = marked_bam,
 		flag = flag
 	}

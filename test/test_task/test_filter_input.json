@@ -1,4 +1,4 @@
 {
-	"test_filter.marked_bam":			"test_data/encode_inputs/marked.bam",
-	"test_filter.UMI":	 				false,
+    "test_filter.marked_bam": "gs://encode-pipeline-test-runs/dnase/0eaecc57-7137-425f-87a4-8118f2b10226/call-dups/glob-925d89d5d97689bc407b65a0d646103b/marked.bam",
+    "test_filter.UMI": false
 }
