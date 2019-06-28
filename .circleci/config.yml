@@ -101,7 +101,6 @@ jobs:
     <<: *machine_defaults
     steps:
       - checkout
-      - setup_remote_docker 
       - run: *make_tag
       - run: *install_samtools
       - run: *setup_git_lfs
