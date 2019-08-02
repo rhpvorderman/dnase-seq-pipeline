@@ -1,0 +1,4 @@
+{
+    "test_cutcounts.filtered_bam": "test_data/encode_inputs/filtered.bam",
+    "test_cutcounts.reference_index": "test_data/ref/chr22.fa.fai"
+}

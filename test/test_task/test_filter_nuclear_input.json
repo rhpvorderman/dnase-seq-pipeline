@@ -1,0 +1,4 @@
+{
+    "test_filter_nuclear.filtered_bam": "test_data/encode_inputs/filtered.bam",
+    "test_filter_nuclear.nuclear_chroms": "test_data/ref/chr22.fa.nuclear.txt"
+}
