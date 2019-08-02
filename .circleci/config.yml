@@ -2,9 +2,9 @@
 # for ENCODE DNase-seq Pipeline
 # Maintainer: Ulugbek Baymuradov
 
-version: 2.1
 # Defaults and functions
 ---
+version: 2.1
 defaults: &defaults
   docker:
     - image: circleci/buildpack-deps:xenial-scm
