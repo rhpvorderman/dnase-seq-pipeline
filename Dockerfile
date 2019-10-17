@@ -1,7 +1,7 @@
 ############
 # Build base
 from ubuntu:18.04 as build-base
-RUN apt-get update
+RUN apt-get -o Acquire::ForceIPv4=true update
 RUN apt-get install -y \
       build-essential \
       git \
@@ -154,8 +154,8 @@ RUN apt-get install -y \
       libgsl-dev
 RUN git clone --recurse-submodules https://github.com/smithlabcode/preseq.git \
    && cd preseq \
-   && git checkout v2.0.1 \
-   && make
+   && git checkout v2.0.3 \
+   && make all
 
 
 #############
