@@ -154,7 +154,6 @@ RUN apt-get install -y \
       libgsl-dev
 RUN git clone --recurse-submodules https://github.com/smithlabcode/preseq.git \
    && cd preseq \
-   && git checkout v2.0.3 \
    && make all
 
 
