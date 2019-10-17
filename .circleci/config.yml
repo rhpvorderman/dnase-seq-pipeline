@@ -4,6 +4,7 @@
 
 # Defaults and functions
 ---
+version: 2.1
 defaults: &defaults
   docker:
     - image: circleci/buildpack-deps:xenial-scm
@@ -42,34 +43,76 @@ install_samtools: &install_samtools
   command: |
     sudo apt-get install samtools -y
 
+install_bedops: &install_bedops
+  name: install bedops for starch comparison
+  command: |
+    # Need wget since github redirects to a moving url
+    sudo apt-get install wget
+    wget "https://github.com/bedops/bedops/releases/download/v2.4.36/bedops_linux_x86_64-v2.4.36.tar.bz2"
+    tar jxvf bedops_linux_x86_64-v2.4.36.tar.bz2
+    sudo cp bin/* /usr/local/bin
+
 run_dups_task: &run_dups_task
   name: run dups task with cromwell/wdl
   command: |
-    test/test.sh test/test_task/test_dups.wdl test/test_task/test_dups_input.json quay.io/encode-dcc/dnase-seq-pipeline:template docker
+    test/test.sh test/test_task/test_dups.wdl test/test_task/test_dups_input.json $TAG docker
 
 run_filter_task: &run_filter_task
   name: run filter task with cromwell/wdl
   command: |
-    test/test.sh test/test_task/test_filter.wdl test/test_task/test_filter_input.json quay.io/encode-dcc/dnase-seq-pipeline:template docker
+    test/test.sh test/test_task/test_filter.wdl test/test_task/test_filter_input.json $TAG docker
 
-install_singularity: &install_singularity
-  name: install singularity
+run_bam_counts_task: &run_bam_counts_task
+  name: run bam_counts task with cromwell/wdl
   command: |
-    sudo apt-get update
-    sudo apt-get install \
-    dh-autoreconf \
-    build-essential \
-    libarchive-dev \
-    squashfs-tools
-    wget https://github.com/singularityware/singularity/releases/download/2.6.0/singularity-2.6.0.tar.gz
-    tar xvf singularity-2.6.0.tar.gz
-    cd singularity-2.6.0
-    ./configure --prefix=/usr/local --sysconfdir=/etc
-    make
-    sudo make install
-    singularity --version
+    test/test.sh test/test_task/test_bam_counts.wdl test/test_task/test_bam_counts_input.json $TAG docker
+
+run_hotspot2_task: &run_hotspot2_task
+  name: run hotspot2 task with cromwell/wdl
+  command: |
+    test/test.sh test/test_task/test_hotspot2.wdl test/test_task/test_hotspot2_input.json $TAG docker
+
+run_spot_score_task: &run_spot_score_task
+  name: run spot_score task with cromwell/wdl
+  command: |
+    test/test.sh test/test_task/test_spot_score.wdl test/test_task/test_spot_score_input.json $TAG docker
+
+run_filter_nuclear_task: &run_filter_nuclear_task
+  name: run filter_nuclear task with cromwell/wdl
+  command: |
+    test/test.sh test/test_task/test_filter_nuclear.wdl test/test_task/test_filter_nuclear_input.json $TAG docker
+
+run_preseq_task: &run_preseq_task
+  name: run preseq task with cromwell/wdl
+  command: |
+    test/test.sh test/test_task/test_preseq.wdl test/test_task/test_preseq_input.json $TAG docker
+
+run_cutcounts_task: &run_cutcounts_task
+  name: run cutcounts task with cromwell/wdl
+  command: |
+    test/test.sh test/test_task/test_cutcounts.wdl test/test_task/test_cutcounts_input.json $TAG docker
+
+run_density_task: &run_density_task
+  name: run density task with cromwell/wdl
+  command: |
+    test/test.sh test/test_task/test_density.wdl test/test_task/test_density_input.json $TAG docker
+
+run_insert_sizes_task: &run_insert_sizes_task
+  name: run insert_sizes task with cromwell/wdl
+  command: |
+    test/test.sh test/test_task/test_insert_sizes.wdl test/test_task/test_insert_sizes_input.json $TAG docker
+
+run_count_adaptors_task: &run_count_adaptors_task
+  name: run filter task with cromwell/wdl
+  command: |
+    test/test.sh test/test_task/test_count_adaptors.wdl test/test_task/test_count_adaptors_input.json $TAG docker
+
+run_normalize_density_task: &run_normalize_density_task
+  name: run normalize_density task with cromwell/wdl
+  command: |
+    test/test.sh test/test_task/test_normalize_density.wdl test/test_task/test_normalize_density_input.json $TAG docker
+
 # Jobs
-version: 2
 jobs:
   unittests:
     <<: *python_defaults
@@ -91,12 +134,27 @@ jobs:
             echo "pulling template!"
             docker pull quay.io/encode-dcc/dnase-seq-pipeline:template
             docker login -u=${QUAY_ROBOT_USER} -p=${QUAY_ROBOT_USER_TOKEN} quay.io
-            docker build --cache-from quay.io/encode-dcc/dnase-seq-pipeline:template --build-arg GIT_COMMIT_HASH=${CIRCLE_SHA1} --build-arg BRANCH=${CIRCLE_BRANCH} --build-arg BUILD_TAG=${TAG} -t $TAG -t quay.io/encode-dcc/dnase-seq-pipeline:template .
+            docker build --cache-from quay.io/encode-dcc/dnase-seq-pipeline:template --build-arg GIT_COMMIT_HASH=${CIRCLE_SHA1} --build-arg BRANCH=${CIRCLE_BRANCH} --build-arg BUILD_TAG=${TAG} -t $TAG .
             docker push $TAG
-            docker push quay.io/encode-dcc/dnase-seq-pipeline:template
             docker logout
           no_output_timeout: 30m
-  
+
+  push_template:
+      <<: *defaults
+      steps:
+        - checkout
+        - setup_remote_docker
+        - run: *make_tag
+        - run:
+            command: |
+              source ${BASH_ENV}
+              docker pull $TAG
+              docker login -u=${QUAY_ROBOT_USER} -p=${QUAY_ROBOT_USER_TOKEN} quay.io
+              docker tag $TAG quay.io/encode-dcc/mirna-seq-pipeline:template 
+              docker push quay.io/encode-dcc/mirna-seq-pipeline:template
+              docker logout
+            no_output_timeout: 30m
+
   test_dups_docker:
     <<: *machine_defaults
     steps:
@@ -140,13 +198,346 @@ jobs:
             output_marked_bam=$(jq -r '.outputs."test_filter.filter.filtered_bam"' test_filter_input.metadata.json)
             [ -f $expected_marked_bam ] || exit 1
             [ -f $output_marked_bam ] || exit 1
-            cmp_bam $expected_marked_bam $output_marked_bam
+            cmp <(samtools view $expected_filtered_bam) <(samtools view $output_marked_bam) || (echo "bams don't match" ; exit 1)
+
+  test_bam_counts_docker:
+    <<: *machine_defaults
+    steps:
+      - checkout
+      - run: *make_tag
+      - run: *setup_git_lfs
+      - run: *install_jq
+      - run: *run_bam_counts_task
+      - run:
+          name: compare bam_counts step outputs
+          command: |
+            source ${BASH_ENV}
+            source test/test_helper.bash
+            expected_tagcounts="test_data/dnase/aggregation/expected/tagcounts.txt"
+            output_tagcounts=$(jq -r '.outputs."test_bam_counts.bam_counts.tagcounts"' test_bam_counts_input.metadata.json)
+            [ -f $expected_tagcounts ] || exit 1
+            [ -f $output_tagcounts ] || exit 1
+            cmp $expected_tagcounts $output_tagcounts || (echo "tagcounts don't match" ; exit 1)
+
+  test_hotspot2_docker:
+    <<: *machine_defaults
+    steps:
+      - checkout
+      - run: *make_tag
+      - run: *install_bedops
+      - run: *setup_git_lfs
+      - run: *install_jq
+      - run: *run_hotspot2_task
+      - run:
+          name: compare hotspot2 step outputs
+          command: |
+            source ${BASH_ENV}
+            source test/test_helper.bash
+            expected_hotspot_calls=test_data/dnase/aggregation/expected/peaks/filtered.hotspots.fdr0.05.starch
+            output_hotspot_calls=$(jq -r '.outputs."test_hotspot2.hotspot2.hotspot_calls"' test_hotspot2_input.metadata.json)
+            expected_one_percent_peaks=test_data/dnase/aggregation/expected/peaks/filtered.peaks.fdr0.001.starch
+            output_one_percent_peaks=$(jq -r '.outputs."test_hotspot2.hotspot2.onepercent_peaks"' test_hotspot2_input.metadata.json)
+            [ -f $expected_hotspot_calls ] || exit 1
+            [ -f $output_hotspot_calls ] || exit 1
+            [ -f $expected_one_percent_peaks ] || exit 1
+            [ -f $output_one_percent_peaks ] || exit 1
+            cmp <(unstarch $expected_hotspot_calls) <(unstarch $output_hotspot_calls) || (echo "hotspot calls don't match" ; exit 1)
+            cmp <(unstarch $expected_one_percent_peaks) <(unstarch $output_one_percent_peaks) || (echo "one percent peaks don't match" ; exit 1)
+
+  #TODO Missing Files, but derivatives, still should probably get the files
+  test_spot_score_docker:
+    <<: *machine_defaults
+    steps:
+      - checkout
+      - run: *make_tag
+      - run: *setup_git_lfs
+      - run: *install_jq
+      - run: *run_spot_score_task
+      - run:
+          name: compare spot score step outputs
+          command: |
+            source ${BASH_ENV}
+            source test/test_helper.bash
+            expected_spot_info=test_data/dnase/aggregation/expected/r1.spot.out
+            output_spot_info=$(jq -r '.outputs."test_spot_score.spot_score.r1_spot_info"' test_spot_score_input.metadata.json)
+            # expected_hotsopt_info=
+            # output_hotsopt_info=$(jq -r '.outputs."test_spot_score.spot_score.onepercent_peaks"' test_spot_score_input.metadata.json)
+            [ -f $expected_spot_info ] || exit 1
+            [ -f $output_spot_info ] || exit 1
+            # [ -f $expected_one_percent_peaks ] || exit 1
+            # [ -f $output_one_percent_peaks ] || exit 1
+            cmp $expected_spot_info $output_spot_info || (echo "spot info don't match" ; exit 1)
+            # cmp $expected_hotsopt_info $output_hotsopt_info || (echo "hotspot info don't match" ; exit 1)
+
+  #TODO Missing files
+  test_filter_nuclear_docker:
+    <<: *machine_defaults
+    steps:
+      - checkout
+      - run: *make_tag
+      - run: *install_samtools
+      - run: *setup_git_lfs
+      - run: *install_jq
+      - run: *run_filter_nuclear_task
+      - run:
+          name: compare filter nuclear step outputs
+          command: |
+            source ${BASH_ENV}
+            source test/test_helper.bash
+            expected_nuclear_bam=
+            output_nuclear_bam=$(jq -r '.outputs."test_filter_nuclear.filter_nuclear.nuclear_bam"' test_filter_nuclear_input.metadata.json)
+            exit 1 
+            [ -f $expected_nuclear_bam ] || exit 1
+            [ -f $output_nuclear_bam ] || exit 1
+            cmp <(samtools view $expected_nuclear_bam) <(samtools view $output_nuclear_bam) || (echo "nuclear bams don't match" ; exit 1)
+
+  test_preseq_docker:
+    <<: *machine_defaults
+    steps:
+      - checkout
+      - run: *make_tag
+      - run: *setup_git_lfs
+      - run: *install_jq
+      - run: *run_preseq_task
+      - run:
+          name: compare filter nuclear step outputs
+          command: |
+            source ${BASH_ENV}
+            source test/test_helper.bash
+            expected_preseq_txt="test_data/dnase/aggregation/expected/preseq.txt"
+            output_preseq_txt=$(jq -r '.outputs."test_preseq.preseq.preseq_txt"' test_preseq_input.metadata.json)
+            expected_dups_hist="test_data/dnase/aggregation/expected/dups.hist"
+            output_dups_hist=$(jq -r '.outputs."test_preseq.preseq.dups_hist"' test_preseq_input.metadata.json)
+            expected_preseq_targets="test_data/dnase/aggregation/expected/preseq_targets.txt"
+            output_preseq_targets=$(jq -r '.outputs."test_preseq.preseq.preseq_targets"' test_preseq_input.metadata.json)
+            [ -f $expected_preseq_txt ] || exit 1
+            [ -f $output_preseq_txt ] || exit 1
+            [ -f $expected_dups_hist ] || exit 1
+            [ -f $output_dups_hist ] || exit 1
+            [ -f $expected_preseq_targets ] || exit 1
+            [ -f $output_preseq_targets ] || exit 1
+            cmp $expected_preseq_txt $output_preseq_txt || (echo "preseq txt don't match" ; exit 1)
+            cmp $expected_dups_hist $output_dups_hist || (echo "dups hist don't match" ; exit 1)
+            cmp $expected_preseq_targets $output_preseq_targets || (echo "preseq targets don't match" ; exit 1)
+
+  test_cutcounts_docker:
+    <<: *machine_defaults
+    steps:
+      - checkout
+      - run: *make_tag
+      - run: *install_samtools
+      - run: *install_bedops
+      - run: *setup_git_lfs
+      - run: *install_jq
+      - run: *run_cutcounts_task
+      - run:
+          name: compare cutcounts step outputs
+          command: |
+            source ${BASH_ENV}
+            source test/test_helper.bash
+            expected_fragments_starch="test_data/dnase/aggregation/expected/fragments.starch"
+            output_fragments_starch=$(jq -r '.outputs."test_cutcounts.cutcounts.fragments_starch"' test_cutcounts_input.metadata.json)
+            expected_cutcounts_starch="test_data/dnase/aggregation/expected/cutcounts.starch"
+            output_cutcounts_starch=$(jq -r '.outputs."test_cutcounts.cutcounts.cutcounts_starch"' test_cutcounts_input.metadata.json)
+            expected_cutcounts_bw="test_data/dnase/aggregation/expected/cutcounts.bw"
+            output_cutcounts_bw=$(jq -r '.outputs."test_cutcounts.cutcounts.cutcounts_bw"' test_cutcounts_input.metadata.json)
+            expected_cutcounts_bed_bgz="test_data/dnase/aggregation/expected/cutcounts.bed.bgz"
+            output_cutcounts_bed_bgz=$(jq -r '.outputs."test_cutcounts.cutcounts.cutcounts_bed_bgz"' test_cutcounts_input.metadata.json)
+            expected_cutcounts_bed_bgz_tbi="test_data/dnase/aggregation/expected/cutcounts.bed.bgz.tbi"
+            output_cutcounts_bed_bgz_tbi=$(jq -r '.outputs."test_cutcounts.cutcounts.cutcounts_bed_bgz_tbi"' test_cutcounts_input.metadata.json)
+            [ -f $expected_fragments_starch ] || exit 1
+            [ -f $output_fragments_starch ] || exit 1
+            [ -f $expected_cutcounts_starch ] || exit 1
+            [ -f $output_cutcounts_starch ] || exit 1
+            [ -f $expected_cutcounts_bw ] || exit 1
+            [ -f $output_cutcounts_bw ] || exit 1
+            [ -f $expected_cutcounts_bed_bgz ] || exit 1
+            [ -f $output_cutcounts_bed_bgz ] || exit 1
+            [ -f $expected_cutcounts_bed_bgz_tbi ] || exit 1
+            [ -f $output_cutcounts_bed_bgz_tbi ] || exit 1
+            cmp <(unstarch $expected_fragments_starch) <(unstarch $output_fragments_starch) || (echo "fragments don't match" ; exit 1)
+            cmp <(unstarch $expected_cutcounts_starch) <(unstarch $output_cutcounts_starch) || (echo "Starch don't match" ; exit 1)
+            cmp $expected_cutcounts_bw $output_cutcounts_bw || (echo "BigWig don't match" ; exit 1)
+            cmp $expected_cutcounts_bed_bgz $output_cutcounts_bed_bgz || (echo "cutcounts.bed.bgz don't match" ; exit 1)
+            cmp $expected_cutcounts_bed_bgz_tbi $output_cutcounts_bed_bgz_tbi || (echo "cutcounts.bed.bgz.tbi don't match" ; exit 1)
+
+  #TODO Missing Files, but should be fine since its derivative
+  test_density_docker:
+    <<: *machine_defaults
+    steps:
+      - checkout
+      - run: *make_tag
+      - run: *install_samtools
+      - run: *install_bedops
+      - run: *setup_git_lfs
+      - run: *install_jq
+      - run: *run_density_task
+      - run:
+          name: compare density step outputs
+          command: |
+            source ${BASH_ENV}
+            source test/test_helper.bash
+            expected_density_starch="test_data/dnase/aggregation/expected/density.starch"
+            output_density_starch=$(jq -r '.outputs."test_density.density.density_starch"' test_density_input.metadata.json)                    
+            # expected_density_bw=""
+            # output_density_bw=$(jq -r '.outputs."test_density.density.density_bw"' test_density_input.metadata.json)              
+            # expected_density_bgz=""
+            # output_density_bgz=$(jq -r '.outputs."test_density.density.density_bgz"' test_density_input.metadata.json)              
+            # expected_density_bgz_tbi=""
+            # output_density_bgz_tbi=$(jq -r '.outputs."test_density.density.density_bgz_tbi"' test_density_input.metadata.json)     
+            [ -f $expected_density_starch ] || exit 1
+            [ -f $output_density_starch ] || exit 1
+            # [ -f $expected_density_bw ] || exit 1
+            # [ -f $output_density_bw ] || exit 1
+            # [ -f $expected_density_bgz ] || exit 1
+            # [ -f $output_density_bgz ] || exit 1
+            # [ -f $expected_density_bgz_tbi ] || exit 1
+            # [ -f $output_density_bgz_tbi ] || exit 1
+            cmp <(unstarch $expected_density_starch) <(unstarch $output_density_starch) || (echo "density don't match" ; exit 1)
+            # cmp $expected_density_bw $output_density_bw || (echo "BigWig don't match" ; exit 1)
+            # cmp $expected_density_bgz $output_density_bgz || (echo "density.bgz don't match" ; exit 1)
+            # cmp $expected_density_bgz_tbi $output_density_bgz_tbi || (echo "density.bgz.tbi don't match" ; exit 1)
+
+
+  test_insert_sizes_docker:
+    <<: *machine_defaults
+    steps:
+      - checkout
+      - run: *make_tag
+      - run: *setup_git_lfs
+      - run: *install_jq
+      - run: *run_insert_sizes_task
+      - run:
+          name: compare insert_sizes step outputs
+          command: |
+            source ${BASH_ENV}
+            source test/test_helper.bash
+            expected_CISM_picard="test_data/dnase/aggregation/expected/CollectInsertSizeMetrics.picard"
+            output_CISM_picard=$(jq -r '.outputs."test_insert_sizes.insert_sizes.collect_insert_size_metrics"' test_insert_sizes_input.metadata.json | jq -r .[0])
+            expected_CISM_info="test_data/dnase/aggregation/expected/CollectInsertSizeMetrics.picard.info"
+            output_CISM_info=$(jq -r '.outputs."test_insert_sizes.insert_sizes.collect_insert_size_metrics"' test_insert_sizes_input.metadata.json | jq -r .[1])
+            expected_CISM_PDF="test_data/dnase/aggregation/expected/CollectInsertSizeMetrics.picard.pdf"
+            output_CISM_PDF=$(jq -r '.outputs."test_insert_sizes.insert_sizes.collect_insert_size_metrics"' test_insert_sizes_input.metadata.json | jq -r .[2])
+            [ -f $expected_CISM_picard ] || exit 1
+            [ -f $output_CISM_picard ] || exit 1
+            [ -f $expected_CISM_info ] || exit 1
+            [ -f $output_CISM_info ] || exit 1
+            [ -f $expected_CISM_PDF ] || exit 1
+            [ -f $output_CISM_PDF ] || exit 1
+            cmp_picard $expected_CISM_picard $output_CISM_picard
+            cmp $expected_CISM_info $output_CISM_info || (echo "info don't match" ; exit 1)
+            # cmp $expected_CISM_PDF $output_CISM_PDF || (echo "pdf don't match" ; exit 1) # PDf has headers
+
+  test_count_adaptors_docker:
+    <<: *machine_defaults
+    steps:
+      - run: *make_tag
+      - checkout
+      - run: *install_bedops
+      - run: *setup_git_lfs
+      - run: *install_jq
+      - run: *run_count_adaptors_task
+      - run:
+          name: compare count_adaptors step outputs
+          command: |
+            source ${BASH_ENV}
+            source test/test_helper.bash
+            expected_adapter_counts="test_data/dnase/aggregation/expected/adapter.counts.txt"
+            output_adapter_counts=$(jq -r '.outputs."test_count_adaptors.count_adaptors.adapter_counts"' test_count_adaptors_input.metadata.json)
+            [ -f $output_adapter_counts ] || exit 1
+            [ -f $expected_adapter_counts ] || exit 1
+            cmp <(unstarch $expected_adapter_counts) <(unstarch $output_adapter_counts) || (echo "adapter counts calls don't match" ; exit 1)
+
+  #TODO missing all files
+  test_normalize_density_docker:
+    <<: *machine_defaults
+    steps:
+      - run: *make_tag
+      - checkout
+      - run: *install_bedops
+      - run: *setup_git_lfs
+      - run: *install_jq
+      - run: *run_normalize_density_task
+      - run:
+          name: compare normalize_density step outputs
+          command: |
+            source ${BASH_ENV}
+            source test/test_helper.bash
+            expected_normalized_density_bgz=""
+            output_normalized_density_bgz=$(jq -r '.outputs."test_normalize_density.normalize_density.normalized_density_bgz"' test_normalize_density_input.metadata.json)
+            expected_normalized_density_bgz_tbi=""
+            output_normalized_density_bgz_tbi=$(jq -r '.outputs."test_normalize_density.normalize_density.normalized_density_bgz_tbi"' test_normalize_density_input.metadata.json)
+            expected_normalized_density_bw=""
+            output_normalized_density_bw=$(jq -r '.outputs."test_normalize_density.normalize_density.normalized_density_bw"' test_normalize_density_input.metadata.json)
+            expected_normalized_density_starch=""
+            output_normalized_density_starch=$(jq -r '.outputs."test_normalize_density.normalize_density.normalized_density_starch"' test_normalize_density_input.metadata.json)
+            exit 1 
+            [ -f $expected_normalized_density_bgz ] || exit 1
+            [ -f $output_normalized_density_bgz ] || exit 1
+            [ -f $expected_normalized_density_bgz_tbi ] || exit 1
+            [ -f $output_normalized_density_bgz_tbi ] || exit 1
+            [ -f $expected_normalized_density_bw ] || exit 1
+            [ -f $output_normalized_density_bw ] || exit 1
+            [ -f $expected_normalized_density_starch ] || exit 1
+            [ -f $output_normalized_density_starch ] || exit 1
+            cmp $expected_normalized_density_bgz $output_normalized_density_bgz || (echo "normalized.density.bgz don't match" ; exit 1)
+            cmp $expected_normalized_density_bgz_tbi $output_normalized_density_bgz_tbi || (echo "normalized.density.bgz.tbi don't match" ; exit 1)
+            cmp $expected_normalized_density_bw $output_normalized_density_bw || (echo "BigWig don't match" ; exit 1)
+            cmp <(unstarch $expected_normalized_density_starch) <(unstarch $output_normalized_density_starch) || (echo "adapter counts calls don't match" ; exit 1)
+
 
 # Workflow
 workflows:
-  version: 2
   build_workflow:
     jobs:
-      # Will comment out anything that is known to work temporarily
-      # - test_dups_docker
-      - test_filter_docker
+      - build
+      - test_dups_docker:
+          requires:
+            - build
+      - test_filter_docker:
+          requires:
+            - build
+      - test_bam_counts_docker:
+          requires:
+            - build
+      - test_count_adaptors_docker:
+          requires:
+            - build
+      - test_hotspot2_docker:
+          requires:
+            - build
+      - test_spot_score_docker:
+          requires:
+            - build
+      # - test_filter_nuclear_docker: # Sample files needed
+      #     requires:
+      #       - build
+      # - test_preseq_docker: #inconsistent output
+          # requires:
+          #   - build 
+      - test_cutcounts_docker:
+          requires:
+            - build
+      # - test_density_docker: #Missing sample output files
+      #     requires:
+      #       - build 
+      - test_insert_sizes_docker:
+          requires:
+            - build
+      - test_normalize_density_docker:
+          requires:
+            - build
+      - push_template:
+          requires:
+            - test_dups_docker
+            - test_filter_docker
+            - test_bam_counts_docker
+            - test_count_adaptors_docker
+            - test_hotspot2_docker
+            - test_spot_score_docker
+            # - test_filter_nuclear_docker # Sample files needed
+            # - test_preseq_docker #inconsistent output
+            - test_cutcounts_docker
+            # - test_density_docker #Missing sample output files
+            - test_insert_sizes_docker
+            - test_normalize_density_docker

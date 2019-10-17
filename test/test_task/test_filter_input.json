@@ -1,4 +1,4 @@
 {
-    "test_filter.marked_bam": "test_data/encode_imputs/marked.bam",
+    "test_filter.marked_bam": "test_data/encode_inputs/marked.bam",
     "test_filter.UMI": false
 }

@@ -1,0 +1,6 @@
+{
+    "test_hotspot2.filtered_bam": "test_data/encode_inputs/filtered.bam",
+    "test_hotspot2.mappable": "test_data/annotations/chr22.K36.mappable_only.bed",
+    "test_hotspot2.chrom_sizes": "test_data/hotspot2/chr22.chrom_sizes.bed",
+    "test_hotspot2.centers": "test_data/hotspot2/chr22.K36.center_sites.n100.starch"
+}

@@ -1,0 +1,7 @@
+{
+    "test_normalize_density.filtered_bam": "test_data/encode_inputs/filtered.bam",
+    "test_normalize_density.density": "test_data/encode_inputs/density.starch",
+    "test_normalize_density.reference_index": "test_data/ref/chr22.fa.fai",
+    "test_normalize_density.bin_size": 20,
+    "test_normalize_density.scale": "1_000_000"
+}

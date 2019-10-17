@@ -1,0 +1,6 @@
+{
+    "test_spot_score.filtered_bam": "test_data/encode_inputs/filtered.bam",
+    "test_spot_score.mappable": "test_data/annotations/chr22.K36.mappable_only.bed",
+    "test_spot_score.chrom_info": "test_data/annotations/chr22.chromInfo.bed",
+    "test_spot_score.read_length": 36
+}

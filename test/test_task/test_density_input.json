@@ -1,0 +1,8 @@
+{
+    "test_density.window_size": 75,
+    "test_density.reference_index": "test_data/ref/chr22.fa.fai",
+    "test_density.scale": "1_000_000",
+    "test_density.chrom_bucket": "test_data/densities/chrom-buckets.chr22.75_20.bed.starch",
+    "test_density.filtered_bam": "test_data/encode_inputs/filtered.bam",
+    "test_density.bin_size": 20
+}
