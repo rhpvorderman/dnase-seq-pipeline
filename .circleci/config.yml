@@ -41,7 +41,7 @@ install_jq: &install_jq
 install_samtools: &install_samtools
   name: install samtools for bam comparison
   command: |
-    sudo apt-get install samtools -y
+    sudo apt-get update && sudo apt-get install samtools -y
 
 install_bedops: &install_bedops
   name: install bedops for starch comparison
