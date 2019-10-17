@@ -150,8 +150,8 @@ jobs:
               source ${BASH_ENV}
               docker pull $TAG
               docker login -u=${QUAY_ROBOT_USER} -p=${QUAY_ROBOT_USER_TOKEN} quay.io
-              docker tag $TAG quay.io/encode-dcc/mirna-seq-pipeline:template 
-              docker push quay.io/encode-dcc/mirna-seq-pipeline:template
+              docker tag $TAG quay.io/encode-dcc/dnase-seq-pipeline:template 
+              docker push quay.io/encode-dcc/dnase-seq-pipeline:template
               docker logout
             no_output_timeout: 30m
 
