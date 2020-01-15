@@ -524,9 +524,9 @@ workflows:
       - test_insert_sizes_docker:
           requires:
             - build
-      - test_normalize_density_docker:
-          requires:
-            - build
+      # - test_normalize_density_docker:
+      #     requires:
+      #       - build
       - push_template:
           requires:
             - test_dups_docker
@@ -538,6 +538,6 @@ workflows:
             # - test_filter_nuclear_docker # Sample files needed
             # - test_preseq_docker #inconsistent output
             - test_cutcounts_docker
-            # - test_density_docker #Missing sample output files
+            # - test_density_docker # Missing sample output files
             - test_insert_sizes_docker
-            - test_normalize_density_docker
+            # - test_normalize_density_docker # Missing sample output files
